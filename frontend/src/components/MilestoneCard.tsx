@@ -11,110 +11,69 @@ interface MilestoneCardProps {
   onRelease?: () => void;
 }
 
-export default function MilestoneCard({
-  index,
-  description,
-  amount,
-  status,
-  userRole,
-  isLoading,
-  onSubmit,
-  onRelease,
-}: MilestoneCardProps) {
-  const statusConfig = {
-    Pending: {
-      label: 'Pending',
-      className: 'text-gray-400 bg-gray-800 border-gray-700',
-    },
-    Submitted: {
-      label: 'Submitted',
-      className: 'text-yellow-400 bg-yellow-900/30 border-yellow-800/60',
-    },
-    Released: {
-      label: 'Released',
-      className: 'text-green-400 bg-green-900/30 border-green-800/60',
-    },
-  };
+function Spinner() {
+  return (
+    <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+    </svg>
+  );
+}
 
+const statusConfig = {
+  Pending: { label: 'Pending', badgeClass: 'badge-pending', dot: 'bg-slate-500' },
+  Submitted: { label: 'Awaiting Release', badgeClass: 'badge-submitted', dot: 'bg-yellow-400' },
+  Released: { label: 'Released', badgeClass: 'badge-released', dot: 'bg-green-400' },
+};
+
+export default function MilestoneCard({ index, description, amount, status, userRole, isLoading, onSubmit, onRelease }: MilestoneCardProps) {
   const config = statusConfig[status];
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4 transition-all duration-200 hover:border-gray-700">
+    <div className="card card-hover p-5 space-y-4">
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1 flex-1">
-          <p className="text-xs text-indigo-400 font-medium">
-            Milestone {index + 1}
+        <div className="space-y-1.5 flex-1 min-w-0">
+          <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#F5A623', fontFamily: 'Space Grotesk, sans-serif' }}>
+            M{index + 1}
+          </span>
+          <p className="text-sm leading-snug" style={{ color: '#CBD5E1' }}>{description}</p>
+          <p className="text-lg font-bold" style={{ color: '#F5A623', fontFamily: 'Space Grotesk, sans-serif' }}>
+            {parseFloat(amount).toFixed(2)} <span className="text-sm font-normal" style={{ color: '#475569' }}>USDC</span>
           </p>
-          <p className="text-white font-medium leading-snug">{description}</p>
-          <p className="text-indigo-300 text-sm font-semibold">{amount} USDC</p>
         </div>
-        <span
-          className={`text-xs px-2.5 py-1 rounded-full border font-medium shrink-0 ${config.className}`}
-        >
+        <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${config.badgeClass}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
           {config.label}
         </span>
       </div>
 
-      <div className="flex gap-2">
+      <div className="pt-1">
         {status === 'Pending' && userRole === 'contractor' && onSubmit && (
-          <button
-            onClick={onSubmit}
-            disabled={isLoading}
-            className="flex-1 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95"
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-                Submitting...
-              </span>
-            ) : (
-              'Mark as Complete'
-            )}
+          <button onClick={onSubmit} disabled={isLoading} className="w-full btn-ghost text-sm">
+            {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner /> Submitting...</span> : 'Mark as Complete'}
           </button>
         )}
-
         {status === 'Submitted' && userRole === 'client' && onRelease && (
-          <button
-            onClick={onRelease}
-            disabled={isLoading}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95"
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-                Releasing...
-              </span>
-            ) : (
-              'Release Payment'
-            )}
+          <button onClick={onRelease} disabled={isLoading} className="w-full btn-primary text-sm glow-amber-sm">
+            {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner /> Releasing...</span> : 'Release Payment'}
           </button>
         )}
-
         {status === 'Released' && (
-          <div className="flex-1 flex items-center justify-center gap-2 text-green-400 text-sm py-2.5">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          <div className="flex items-center justify-center gap-2 text-sm py-1" style={{ color: '#4ADE80' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
-            Payment released on-chain
+            Payment sent on-chain
           </div>
         )}
-
         {status === 'Pending' && userRole === 'client' && (
-          <div className="flex-1 text-center text-gray-600 text-sm py-2.5">
-            Waiting for contractor submission
-          </div>
+          <p className="text-center text-xs py-1" style={{ color: '#334155' }}>Waiting for contractor submission</p>
         )}
-
         {status === 'Submitted' && userRole === 'contractor' && (
-          <div className="flex-1 text-center text-yellow-500 text-sm py-2.5">
-            Submitted — awaiting client release
-          </div>
+          <p className="text-center text-xs py-1" style={{ color: '#92400E' }}>Submitted — awaiting client release</p>
+        )}
+        {userRole === 'observer' && status !== 'Released' && (
+          <p className="text-center text-xs py-1" style={{ color: '#334155' }}>Connect as client or contractor to interact</p>
         )}
       </div>
     </div>
