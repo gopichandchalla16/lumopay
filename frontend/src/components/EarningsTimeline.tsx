@@ -8,103 +8,90 @@ interface EarningsTimelineProps {
   contractId: string;
 }
 
-function SkeletonCard() {
+function SkeletonRow() {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 animate-pulse space-y-3">
-      <div className="flex justify-between">
-        <div className="h-4 bg-gray-800 rounded w-24" />
-        <div className="h-4 bg-gray-800 rounded w-16" />
+    <div className="flex items-center justify-between py-4 border-b" style={{ borderColor: 'rgba(30,41,59,0.4)' }}>
+      <div className="space-y-2">
+        <div className="skeleton h-3.5 w-24" />
+        <div className="skeleton h-3 w-36" />
       </div>
-      <div className="h-3 bg-gray-800 rounded w-36" />
+      <div className="skeleton h-4 w-16" />
     </div>
   );
 }
 
-export default function EarningsTimeline({
-  contractorAddress,
-  contractId,
-}: EarningsTimelineProps) {
+export default function EarningsTimeline({ contractorAddress, contractId }: EarningsTimelineProps) {
   const [records, setRecords] = useState<EarningsRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!contractorAddress || !contractId) {
-      setLoading(false);
-      return;
-    }
+    if (!contractorAddress || !contractId) { setLoading(false); return; }
     fetchEarningsHistory(contractorAddress, contractId)
-      .then((data) => {
-        const sorted = [...data].sort((a, b) => b.timestamp - a.timestamp);
-        setRecords(sorted);
-      })
+      .then((data) => setRecords([...data].sort((a, b) => b.timestamp - a.timestamp)))
       .finally(() => setLoading(false));
   }, [contractorAddress, contractId]);
 
+  const totalEarned = records.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Earnings Timeline</h3>
-        {records.length > 0 && (
-          <span className="text-xs text-gray-500">
-            {records.length} payment{records.length !== 1 ? 's' : ''} on-chain
+        <h3 className="font-semibold text-white text-base" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          Earnings Timeline
+        </h3>
+        {records.length > 0 && !loading && (
+          <span className="font-bold text-sm" style={{ color: '#F5A623', fontFamily: 'Space Grotesk, sans-serif' }}>
+            +{totalEarned.toFixed(2)} USDC
           </span>
         )}
       </div>
 
-      {loading && (
-        <div className="space-y-3">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      )}
+      <div className="card p-5">
+        {loading && (
+          <div>
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </div>
+        )}
 
-      {!loading && records.length === 0 && (
-        <div className="bg-gray-900 border border-gray-800 border-dashed rounded-xl p-8 text-center space-y-2">
-          <p className="text-gray-500 text-sm">No earnings recorded yet.</p>
-          <p className="text-gray-600 text-xs">
-            Complete your first milestone to start building your on-chain earnings history.
-          </p>
-        </div>
-      )}
+        {!loading && records.length === 0 && (
+          <div className="text-center py-10 space-y-2">
+            <p className="text-sm" style={{ color: '#475569' }}>No earnings recorded yet</p>
+            <p className="text-xs leading-relaxed max-w-xs mx-auto" style={{ color: '#334155' }}>
+              Complete your first milestone to start building your on-chain payment record.
+            </p>
+          </div>
+        )}
 
-      {!loading && records.length > 0 && (
-        <div className="space-y-3">
-          {records.map((record, i) => (
-            <div
-              key={i}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-2 hover:border-gray-700 transition-colors"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-green-400 font-semibold">
-                  +{record.amount} USDC
-                </span>
-                <span className="text-gray-500 text-xs">
-                  {formatDate(record.timestamp)}
-                </span>
+        {!loading && records.length > 0 && (
+          <div>
+            {records.map((record, i) => (
+              <div key={i} className="flex items-center justify-between py-4 border-b last:border-0" style={{ borderColor: 'rgba(30,41,59,0.4)' }}>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm" style={{ color: '#4ADE80' }}>+{record.amount} USDC</span>
+                    <span className="text-xs" style={{ color: '#334155' }}>M{record.milestoneIndex + 1}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs" style={{ color: '#475569' }}>{formatDate(record.timestamp)}</span>
+                    {record.clientAddress && (
+                      <span className="text-xs" style={{ color: '#334155', fontFamily: 'JetBrains Mono, monospace' }}>
+                        from {shortenAddress(record.clientAddress)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {record.txHash && (
+                  <a href={`https://stellar.expert/explorer/testnet/tx/${record.txHash}`} target="_blank" rel="noopener noreferrer" className="text-xs transition-colors" style={{ color: '#F5A623' }}>
+                    View →
+                  </a>
+                )}
               </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-gray-500 text-xs">
-                  Milestone {record.milestoneIndex + 1}
-                </span>
-                <span className="text-gray-600 text-xs font-mono">
-                  From: {shortenAddress(record.clientAddress)}
-                </span>
-              </div>
-              {record.txHash && (
-                <a
-                  href={`https://stellar.expert/explorer/testnet/tx/${record.txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-indigo-500 hover:text-indigo-400 text-xs transition-colors"
-                >
-                  View on Stellar Expert →
-                </a>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
