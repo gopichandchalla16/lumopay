@@ -4,16 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 interface FreighterAPI {
   getPublicKey: () => Promise<string>;
   isConnected: () => Promise<boolean>;
-  signTransaction: (
-    xdr: string,
-    opts?: { networkPassphrase?: string }
-  ) => Promise<string>;
+  signTransaction: (xdr: string, opts?: { networkPassphrase?: string }) => Promise<string>;
 }
 
 declare global {
-  interface Window {
-    freighter?: FreighterAPI;
-  }
+  interface Window { freighter?: FreighterAPI; }
 }
 
 interface UseWalletReturn {
@@ -33,9 +28,7 @@ export function useWallet(): UseWalletReturn {
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setPublicKey(saved);
-    }
+    if (saved) setPublicKey(saved);
   }, []);
 
   const connect = useCallback(async () => {
@@ -43,24 +36,16 @@ export function useWallet(): UseWalletReturn {
     setError(null);
     try {
       if (typeof window === 'undefined' || !window.freighter) {
-        throw new Error(
-          'Freighter wallet not found. Please install the Freighter browser extension from freighter.app'
-        );
+        throw new Error('Freighter not found. Install it at freighter.app then refresh.');
       }
       const connected = await window.freighter.isConnected();
-      if (!connected) {
-        throw new Error('Please open Freighter and unlock your wallet first.');
-      }
+      if (!connected) throw new Error('Open Freighter and unlock your wallet first.');
       const key = await window.freighter.getPublicKey();
-      if (!key) {
-        throw new Error('Could not retrieve public key from Freighter.');
-      }
+      if (!key) throw new Error('Could not read public key from Freighter.');
       setPublicKey(key);
       localStorage.setItem(STORAGE_KEY, key);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to connect wallet.';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Connection failed.');
     } finally {
       setConnecting(false);
     }
